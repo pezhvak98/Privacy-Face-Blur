@@ -44,6 +44,11 @@ The `install.sh` script will take care of installing all the prerequisites neede
     
 -   **Pillow**: For image manipulation.
 
+or install libs using `requirements.txt` :
+```bash
+pip install -r requirements.txt
+```
+
 ## Usage
 
 To run the PrivacyFaceBlur app, execute the following command in your terminal:
