@@ -27,11 +27,11 @@ def reset_state():
     if 'additional_blur' in st.session_state:
         del st.session_state['additional_blur']
 
-# Upload image
+
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"], on_change=reset_state)
 
 if uploaded_file is not None:
-    # Read image
+
     image = cv2.imdecode(np.frombuffer(uploaded_file.read(), np.uint8), cv2.IMREAD_COLOR)
     st.session_state['original_image'] = image
 
@@ -42,7 +42,7 @@ if 'original_image' not in st.session_state:
 if 'original_image' in st.session_state:
     image = st.session_state['original_image']
 
-    # Convert to gray and enhance contrast
+    
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
 
@@ -100,7 +100,7 @@ if 'manual_blur' in st.session_state and st.session_state['manual_blur']:
 
     # Create a canvas for user interaction
     canvas_result = st_canvas(
-        fill_color="rgba(0, 0, 255, 0.5)",  # Increased opacity
+        fill_color="rgba(0, 0, 255, 0.5)",  
         stroke_width=3,
         background_image=annotated_image_pil,
         update_streamlit=True,
@@ -126,16 +126,16 @@ if 'manual_blur' in st.session_state and st.session_state['manual_blur']:
             for (x, y, w, h) in user_faces:
                 # Ensure coordinates are within the image boundaries
                 if x >= 0 and y >= 0 and (x + w) <= image.shape[1] and (y + h) <= image.shape[0]:
-                    # Blur face region with smooth edges
+                    
                     face_region = image[y:y+h, x:x+w]
-                    if face_region.size > 0:  # Check if face_region is not empty
+                    if face_region.size > 0: 
                         mask = np.zeros((h, w), np.uint8)
                         mask = cv2.rectangle(mask, (0, 0), (w, h), (255, 255, 255), -1)
-                        blurred_face = cv2.GaussianBlur(face_region, (15, 15), 30)  # Softer blurring
+                        blurred_face = cv2.GaussianBlur(face_region, (15, 15), 30)  
                         face_region = cv2.seamlessClone(blurred_face, face_region, mask, (w//2, h//2), cv2.NORMAL_CLONE)
                         image[y:y+h, x:x+w] = face_region
 
-        # Display final image
+        
         st.image(image, channels="BGR", caption="Processed Image", use_container_width=True)
 
         # Button to download processed image
