@@ -1,6 +1,6 @@
 streamlit
 opencv-python-headless
-dlib
+dlib-bin
 numpy
 streamlit-drawable-canvas
 pillow
