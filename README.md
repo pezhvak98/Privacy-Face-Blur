@@ -3,6 +3,10 @@
 
 **Privacy Face Blur** is a user-friendly application designed to automatically and manually blur faces in images, ensuring privacy by anonymizing faces in photos.
 
+## Online Demo
+You can use the online [demo](https://privacy-face-blur-pezhvak.streamlit.app/)
+> **Note :** There may be **inconsistencies** due to differences in installed packages in Streamlit
+
 ## Features
 
 -   **Automatic Face Blurring**:  Automatically blurs faces, then allows manual selection of additional faces..
@@ -44,10 +48,7 @@ The `install.sh` script will take care of installing all the prerequisites neede
     
 -   **Pillow**: For image manipulation.
 
-or install libs using `requirements.txt` :
-```bash
-pip install -r requirements.txt
-```
+> **Note:** The **`requirements.txt`** file is only for running this program in `streamlit`. You don't need to use it on your system. The installation script takes care of all the tasks.
 
 ## Usage
 
