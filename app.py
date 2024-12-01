@@ -13,6 +13,7 @@ st.write("""
 - **Manual Mode**: Allows you to manually select faces to blur.
 """)
 
+
 # State reset function
 def reset_state():
     if 'original_image' in st.session_state:
@@ -26,7 +27,7 @@ def reset_state():
     if 'additional_blur' in st.session_state:
         del st.session_state['additional_blur']
 
-
+# Upload image
 uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"], on_change=reset_state)
 
 if uploaded_file is not None:
@@ -41,11 +42,11 @@ if 'original_image' not in st.session_state:
 if 'original_image' in st.session_state:
     image = st.session_state['original_image']
 
-   
+    # Convert to gray and enhance contrast
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray = cv2.equalizeHist(gray)
 
-    
+    # Display the original image
     st.image(image, channels="BGR", caption="Uploaded Image", use_container_width=True)
 
     # Option to choose blurring mode
@@ -76,73 +77,72 @@ if 'original_image' in st.session_state:
         elif blur_mode == "Manual":
             st.session_state['manual_blur'] = True
 
-    if 'auto_blur_done' in st.session_state and st.session_state['auto_blur_done']:
-        image = st.session_state['processed_image']
-        st.image(image, channels="BGR", caption="Automatically Blurred Faces", use_container_width=True)
+if 'auto_blur_done' in st.session_state and st.session_state['auto_blur_done']:
+    image = st.session_state['processed_image']
+    st.image(image, channels="BGR", caption="Automatically Blurred Faces", use_container_width=True)
 
-        additional_blur = st.radio("Are there any faces left unblurred?", ("", "Yes", "No"))
+    additional_blur = st.radio("Are there any faces left unblurred?", ("", "Yes", "No"))
 
-        if additional_blur == "No":
-            _, buffer = cv2.imencode('.png', image)
-            st.download_button(
-                label="Download Processed Image",
-                data=buffer.tobytes(),
-                file_name="blurred_image.png",
-                mime="image/png"
-            )
-        elif additional_blur == "Yes":
-            st.session_state['manual_blur'] = True
-
-    if 'manual_blur' in st.session_state and st.session_state['manual_blur'] and additional_blur == "Yes":
-        image = st.session_state['processed_image']
-        annotated_image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
-
-        # Create a canvas for user interaction
-        canvas_result = st_canvas(
-            fill_color="rgba(0, 0, 255, 0.5)",  
-            stroke_width=3,
-            background_image=annotated_image_pil,
-            update_streamlit=True,
-            height=image.shape[0],
-            width=image.shape[1],
-            drawing_mode="rect",
-            key="canvas",
+    if additional_blur == "No":
+        _, buffer = cv2.imencode('.png', image)
+        st.download_button(
+            label="Download Processed Image",
+            data=buffer.tobytes(),
+            file_name="blurred_image.png",
+            mime="image/png"
         )
+    elif additional_blur == "Yes":
+        st.session_state['manual_blur'] = True
 
-        # Check for user-drawn rectangles
-        user_faces = []
-        if canvas_result.json_data is not None:
-            for obj in canvas_result.json_data["objects"]:
-                if obj["type"] == "rect":
-                    x = int(obj["left"])
-                    y = int(obj["top"])
-                    w = int(obj["width"])
-                    h = int(obj["height"])
-                    user_faces.append((x, y, w, h))
+if 'manual_blur' in st.session_state and st.session_state['manual_blur']:
+    image = st.session_state['processed_image'] if 'processed_image' in st.session_state else st.session_state['original_image']
+    annotated_image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
 
-        if st.button("Blur Selected Faces"):
-            with st.spinner("Blurring faces..."):
-                for (x, y, w, h) in user_faces:
-                    # Ensure coordinates are within the image boundaries
-                    if x >= 0 and y >= 0 and (x + w) <= image.shape[1] and (y + h) <= image.shape[0]:
-                        # Blur face region with smooth edges
-                        face_region = image[y:y+h, x:x+w]
-                        if face_region.size > 0:  # Check if face_region is not empty
-                            mask = np.zeros((h, w), np.uint8)
-                            mask = cv2.rectangle(mask, (0, 0), (w, h), (255, 255, 255), -1)
-                            blurred_face = cv2.GaussianBlur(face_region, (15, 15), 30)  # Softer blurring
-                            face_region = cv2.seamlessClone(blurred_face, face_region, mask, (w//2, h//2), cv2.NORMAL_CLONE)
-                            image[y:y+h, x:x+w] = face_region
+    # Create a canvas for user interaction
+    canvas_result = st_canvas(
+        fill_color="rgba(0, 0, 255, 0.5)",  # Increased opacity
+        stroke_width=3,
+        background_image=annotated_image_pil,
+        update_streamlit=True,
+        height=image.shape[0],
+        width=image.shape[1],
+        drawing_mode="rect",
+        key="canvas",
+    )
 
-                
-                st.image(image, channels="BGR", caption="Processed Image", use_container_width=True)
+    # Check for user-drawn rectangles
+    user_faces = []
+    if canvas_result.json_data is not None:
+        for obj in canvas_result.json_data["objects"]:
+            if obj["type"] == "rect":
+                x = int(obj["left"])
+                y = int(obj["top"])
+                w = int(obj["width"])
+                h = int(obj["height"])
+                user_faces.append((x, y, w, h))
 
-                
-                _, buffer = cv2.imencode('.png', image)
-                st.download_button(
-                    label="Download Processed Image",
-                    data=buffer.tobytes(),
-                    file_name="blurred_image.png",
-                    mime="image/png"
-                )
+    if st.button("Blur Selected Faces"):
+        with st.spinner("Blurring faces..."):
+            for (x, y, w, h) in user_faces:
+                # Ensure coordinates are within the image boundaries
+                if x >= 0 and y >= 0 and (x + w) <= image.shape[1] and (y + h) <= image.shape[0]:
+                    # Blur face region with smooth edges
+                    face_region = image[y:y+h, x:x+w]
+                    if face_region.size > 0:  # Check if face_region is not empty
+                        mask = np.zeros((h, w), np.uint8)
+                        mask = cv2.rectangle(mask, (0, 0), (w, h), (255, 255, 255), -1)
+                        blurred_face = cv2.GaussianBlur(face_region, (15, 15), 30)  # Softer blurring
+                        face_region = cv2.seamlessClone(blurred_face, face_region, mask, (w//2, h//2), cv2.NORMAL_CLONE)
+                        image[y:y+h, x:x+w] = face_region
 
+        # Display final image
+        st.image(image, channels="BGR", caption="Processed Image", use_container_width=True)
+
+        # Button to download processed image
+        _, buffer = cv2.imencode('.png', image)
+        st.download_button(
+            label="Download Processed Image",
+            data=buffer.tobytes(),
+            file_name="blurred_image.png",
+            mime="image/png"
+        )
